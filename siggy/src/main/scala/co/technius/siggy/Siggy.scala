@@ -1,5 +1,8 @@
 package co.technius.siggy
 
+import java.nio.file._
+import java.nio.file.attribute.BasicFileAttributes
+import scala.collection.JavaConverters._
 import scala.meta._
 import scala.util.{Failure, Success, Try}
 
@@ -7,23 +10,33 @@ object Siggy {
   def main(args: Array[String]): Unit = {
     args.toList match {
       case path :: Nil =>
-        withSource(path) { s =>
-          analyze(s.mkString) match {
-            case Left(err) => println("Error: " + err)
-            case Right(sigs) =>
-              println("Found the following functions and methods:")
-              sigs.foreach(println _)
+        scanPath(path) foreach { path =>
+          withSource(path) { s =>
+            analyze(s.mkString) match {
+              case Left(err) => println("Error: " + err)
+              case Right(sigs) =>
+                if (!sigs.isEmpty) {
+                  println(path.toString + ":")
+                  sigs.foreach(println _)
+                }
+            }
           }
         }
       case path :: query :: Nil =>
         Query.parse(query) match {
           case Left(err) => println("Invalid query: " + err)
           case Right(query) =>
-            withSource(path) { s =>
-              analyze(s.mkString) match {
-                case Left(err) => println("Error: " + err)
-                case Right(sigs) =>
-                  querySignatures(sigs, query).foreach(println _)
+            scanPath(path) foreach { path =>
+              withSource(path) { s =>
+                analyze(s.mkString) match {
+                  case Left(err) => println("Error: " + err)
+                  case Right(sigs) =>
+                    val matches = querySignatures(sigs, query)
+                    if (!matches.isEmpty) {
+                      println(path.toString + ":")
+                      matches.foreach(println _)
+                    }
+                }
               }
             }
         }
@@ -31,11 +44,20 @@ object Siggy {
     }
   }
 
-  def withSource(path: String)(f: String => Unit): Unit = {
-    val src = Try(scala.io.Source.fromFile(path))
+  /**
+    * Searches a path for all *.scala files
+    */
+  def scanPath(path: String): Stream[Path] = {
+    val start = Paths.get(path)
+    val jstream = Files.walk(start)
+    jstream.iterator().asScala.toStream.filter(p => Files.isRegularFile(p) && p.toString.endsWith(".scala"))
+  }
+
+  def withSource(path: Path)(f: String => Unit): Unit = {
+    val src = Try(scala.io.Source.fromInputStream(Files.newInputStream(path)))
     src match {
       case Success(s) => f(s.mkString)
-      case Failure(e) => println(e.getMessage)
+      case Failure(e) => println("Error: " + e.getMessage)
     }
   }
 
