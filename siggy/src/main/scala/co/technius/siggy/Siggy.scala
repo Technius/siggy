@@ -86,9 +86,7 @@ object Siggy {
         analyzeStats(prefix + pkg.name, pkg.stats)
       case obj: Defn.Object => findSignatures(prefix + obj.name + ".")(obj.templ)
       case cls: Defn.Class => findSignatures(prefix + cls.name + "#")(cls.templ)
-      case trt: Defn.Trait =>
-        println("foo: " + trt.name)
-        findSignatures(prefix + trt.name + "#")(trt.templ)
+      case trt: Defn.Trait => findSignatures(prefix + trt.name + "#")(trt.templ)
       case _ => List.empty
     }
   }
@@ -108,16 +106,16 @@ object Siggy {
       case _ => ""
     })
     tree collect {
-      case q"..$mods def $name[..$tparams](..$params): ${Some(tpe)} = $expr" =>
-        val sigParams = params.map(p => (p.name.toString, p.decltpe.get.syntax))
-        Signature(prefix, name.syntax, tparams.map(_.syntax), sigParams, tpe.syntax)
+      case Defn.Def(mods, name, tparams, paramLists, Some(tpe), _) =>
+        val pls = paramLists.map(pl => pl.map(p => (p.name.toString, p.decltpe.get.toString)))
+        Signature(prefix, name.toString, tparams.map(_.toString), pls, tpe.toString)
     }
   }
 
   def querySignatures(sigs: List[Signature], query: Query): List[Signature] =
     sigs filter { s =>
       val tparamsMatch = s.tparams == query.tparams
-      val paramsMatch = s.params.map(_._2) == query.params.init
+      val paramsMatch = s.paramLists.flatten.map(_._2) == query.params.init
       val tpeMatch = s.tpe == query.params.last
       tpeMatch && tparamsMatch && paramsMatch
     }
@@ -134,12 +132,16 @@ case class Signature(
   prefix: String,
   name: String,
   tparams: List[String],
-  params: List[(String, String)],
-  tpe: String) {
+  paramLists: List[List[(String, String)]],
+  tpe: String,
+  property: Boolean = false) {
 
   override def toString: String = {
     val tparamStr = if (tparams.isEmpty) "" else tparams.mkString("[", ",", "]")
-    val paramStr = params.map(p => p._1 + ": " + p._2).mkString("(", ", ", ")")
+    val paramStr =
+      if (paramLists.isEmpty && property) ""
+      else paramLists.map(pl =>
+        pl.map(p => p._1 + ": " + p._2).mkString("(", ", ", ")")).mkString
     s"$prefix$name$tparamStr$paramStr: $tpe"
   }
 }
