@@ -29,4 +29,28 @@ class AnalyzerTest extends FlatSpec with Matchers {
     val Right(sigs) = result
     sigs.length should === (3)
   }
+
+  it should "find defs in nested objects and classes" in {
+    val result = Siggy.analyze("""class Foo {
+      class Bar {
+        def baz(a: Int): Int = a
+      }
+    }
+    object Lorem {
+      class Ipsum {
+        def dolor(a: String): String = a
+      }
+      object Sit {
+        def amet(a: Boolean): Boolean = a
+      }
+    }
+    """)
+    result shouldBe a [Right[_, _]]
+    val Right(sigs) = result
+    sigs.length should === (3)
+    val List(bz, dlr, amet) = sigs
+    bz.prefix should === ("Foo.Bar#")
+    dlr.prefix should === ("Lorem.Ipsum#")
+    amet.prefix should === ("Lorem.Sit.")
+  }
 }

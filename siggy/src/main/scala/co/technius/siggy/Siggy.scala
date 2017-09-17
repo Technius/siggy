@@ -81,31 +81,27 @@ object Siggy {
     */
   def analyzeStats(pkgName: String, stats: List[Stat]): List[Signature] = {
     val prefix = if (pkgName.isEmpty) "" else pkgName + "."
+    def recurContainer(name: String, sep: String, st: List[Stat]): List[Signature] =
+      findSignatures(prefix + name + sep)(st) ++ analyzeStats(prefix + name, st)
     stats flatMap {
       case pkg: Pkg =>
         analyzeStats(prefix + pkg.name, pkg.stats)
-      case obj: Defn.Object => findSignatures(prefix + obj.name + ".")(obj.templ)
-      case cls: Defn.Class => findSignatures(prefix + cls.name + "#")(cls.templ)
-      case trt: Defn.Trait => findSignatures(prefix + trt.name + "#")(trt.templ)
+      case obj: Defn.Object => recurContainer(obj.name.toString, ".", obj.templ.stats)
+      case cls: Defn.Class => recurContainer(cls.name.toString, "#", cls.templ.stats)
+      case trt: Defn.Trait => recurContainer(trt.name.toString, "#", trt.templ.stats)
       case _ => List.empty
     }
   }
 
   /**
-    * Searches the syntax tree for method definitions, returning a method
+    * Searches a list of statements for method definitions, returning a method
     * signature.
     * @param enclosing The enclosing class or method.
     * @param sep The separator between the class/method and the method definition.
     * @param tree The syntax tree
     */
-  def findSignatures(pkg: String)(tree: Tree): List[Signature] = {
-    val prefix = pkg + (tree match {
-      case obj: Defn.Object => "." + obj.name + "."
-      case cls: Defn.Class => "." + cls.name + "#"
-      case trt: Defn.Trait => "." + trt.name + "#"
-      case _ => ""
-    })
-    tree collect {
+  def findSignatures(prefix: String)(stats: List[Stat]): List[Signature] = {
+    stats collect {
       case Defn.Def(mods, name, tparams, paramLists, Some(tpe), _) =>
         val pls = paramLists.map(pl => pl.map(p => (p.name.toString, p.decltpe.get.toString)))
         Signature(prefix, name.toString, tparams.map(_.toString), pls, tpe.toString)
