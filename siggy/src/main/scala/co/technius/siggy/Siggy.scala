@@ -67,8 +67,7 @@ object Siggy {
   def analyze(src: String): Either[String, List[Signature]] = {
     src.parse[Source] match {
       case Parsed.Success(tree) =>
-        val pkgs = tree collect { case q"package $name { ..$stats }" => (name, stats) }
-        val defs = pkgs flatMap { case (name, stats) => analyzePkg(name.syntax, stats) }
+        val defs = analyzeStats("", tree.stats)
         Right(defs)
       case Parsed.Error(_, _, details) =>
         Left(details.getMessage)
@@ -76,15 +75,22 @@ object Siggy {
   }
 
   /**
-    * Searches a package for method definitions.
+    * Recursively searches a list of statements for method definitions.
+    * @param pkgName The name of the enclosing package, or empty string if there is none.
+    * @param stats The list of statements to search.
     */
-  def analyzePkg(pkg: String, stats: List[Stat]): List[Signature] = {
-    val containers = stats collect {
-      case obj: Defn.Object => obj
-      case cls: Defn.Class => cls
-      case trt: Defn.Trait => trt
+  def analyzeStats(pkgName: String, stats: List[Stat]): List[Signature] = {
+    val prefix = if (pkgName.isEmpty) "" else pkgName + "."
+    stats flatMap {
+      case pkg: Pkg =>
+        analyzeStats(prefix + pkg.name, pkg.stats)
+      case obj: Defn.Object => findSignatures(prefix + obj.name + ".")(obj.templ)
+      case cls: Defn.Class => findSignatures(prefix + cls.name + "#")(cls.templ)
+      case trt: Defn.Trait =>
+        println("foo: " + trt.name)
+        findSignatures(prefix + trt.name + "#")(trt.templ)
+      case _ => List.empty
     }
-    containers.flatMap(findSignatures(pkg))
   }
 
   /**
