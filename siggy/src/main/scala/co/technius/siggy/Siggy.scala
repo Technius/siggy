@@ -110,10 +110,17 @@ object Siggy {
 
   def querySignatures(sigs: List[Signature], query: Query): List[Signature] =
     sigs filter { s =>
-      val tparamsMatch = s.tparams == query.tparams
-      val paramsMatch = s.paramLists.flatten.map(_._2) == query.params.init
-      val tpeMatch = s.tpe == query.params.last
-      tpeMatch && tparamsMatch && paramsMatch
+      val defParams = s.paramLists.flatten.map(_._2) :+ s.tpe
+
+      // match type paramemter length
+      // this is because e.g. `[A,B] A => B` and `[C,D] C => D` are equivalent
+      val tparamsLenMatch = s.tparams == query.tparams
+      // match type signature
+      val sigMatch = defParams == query.params
+      // match type signature with enclosing class/object/trait appended
+      // e.g. Foo => Int matches Foo.foo: Int
+      lazy val sigWithEncMatch = s.enclosingName.toList ++ defParams == query.params
+      tparamsLenMatch && (sigMatch || sigWithEncMatch)
     }
 }
 
@@ -131,6 +138,16 @@ case class Signature(
   paramLists: List[List[(String, String)]],
   tpe: String,
   property: Boolean = false) {
+
+  def enclosingName: Option[String] = {
+    val i = prefix.lastIndexOf(".")
+    // last character is '.' or '#', so we need to remove it
+    if (i == -1 && prefix.length > i + 1) {
+      if (prefix.isEmpty) None else Some(prefix.init)
+    } else {
+      Some(prefix.slice(i + 1, prefix.length - 1))
+    }
+  }
 
   override def toString: String = {
     val tparamStr = if (tparams.isEmpty) "" else tparams.mkString("[", ",", "]")
