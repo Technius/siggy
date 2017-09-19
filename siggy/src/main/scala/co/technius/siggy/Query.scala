@@ -1,6 +1,6 @@
 package co.technius.siggy
 
-case class Query(tparams: List[String], params: List[String])
+case class Query(tparams: Seq[TypeInfo], params: Seq[TypeInfo])
 
 object Query {
   private object Parser {
@@ -12,11 +12,14 @@ object Query {
     import fastparse.noApi._
     import White._
 
-    val string = P(CharPred(_.isLetter).rep(min = 1))
+    val string: P[String] = P(CharPred(c => c.isLetter || c.isDigit || c == '_').rep(min = 1).!)
 
-    val tparams = P("[" ~ string.!.rep(min = 1, sep = ",") ~ "]")
-    val params = P(string.!.rep(min = 1, sep = "=>"))
-    val query = P(tparams.? ~/ params) map {
+    val tparams: P[Seq[TypeInfo]] = P("[" ~ tpe.rep(min = 1, sep = ",") ~ "]")
+    val tpe: P[TypeInfo] = P(string ~ tparams.?).map {
+      case (n, tp) => TypeInfo(n, tp.getOrElse(List.empty))
+    }
+    val params: P[Seq[TypeInfo]] = P(tpe.rep(min = 1, sep = "=>"))
+    val query: P[Query] = P(tparams.? ~/ params) map {
       case (tpsOpt, ps) => Query(tpsOpt.map(_.toList).getOrElse(List.empty), ps.toList)
     }
   }

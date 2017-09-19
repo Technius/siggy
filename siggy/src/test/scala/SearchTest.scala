@@ -11,4 +11,15 @@ class SearchTest extends FlatSpec with Matchers {
     val Right(query) = Query.parse("Foo => Int")
     Siggy.querySignatures(sigs, query) should not be empty
   }
+
+  it should "find methods in nested objects" in {
+    val Right(sigs) = Siggy.analyze("""object Foo {
+      object Bar {
+        def baz(a: Int): String = a.toString
+      }
+    }
+    """)
+    val Right(query) = Query.parse("Int => String")
+    Siggy.querySignatures(sigs, query) should not be empty
+  }
 }

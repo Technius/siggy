@@ -115,12 +115,15 @@ object Siggy {
 
       // match type paramemter length
       // this is because e.g. `[A,B] A => B` and `[C,D] C => D` are equivalent
-      val tparamsLenMatch = s.tparams == query.tparams
+      val tparamsLenMatch = s.tparams.length == query.tparams.length
       // match type signature
-      val sigMatch = defParams == query.params
+      val sigMatch =
+        defParams.length == query.params.length &&
+        defParams.zip(query.params).forall { case (p1, p2) => p1 == p2.name }
       // match type signature with enclosing class/object/trait appended
       // e.g. Foo => Int matches Foo.foo: Int
-      lazy val sigWithEncMatch = s.enclosingName.toList ++ defParams == query.params
+      lazy val sigWithEncMatch =
+        s.enclosingName.toList ++ defParams == query.params.map(_.name)
       tparamsLenMatch && (sigMatch || sigWithEncMatch)
     }
 }
