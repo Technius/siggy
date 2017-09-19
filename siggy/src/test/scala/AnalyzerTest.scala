@@ -53,4 +53,15 @@ class AnalyzerTest extends FlatSpec with Matchers {
     dlr.prefix should === ("Lorem.Ipsum#")
     amet.prefix should === ("Lorem.Sit.")
   }
+
+  it should "find defs in package objects" in {
+    val result = Siggy.analyze("""package object foo {
+      def bar(a: Int): Int = a
+      def baz(a: String): String = a
+    }
+    """)
+    result shouldBe a [Right[_, _]]
+    val Right(sigs) = result
+    sigs.length should === (2)
+  }
 }

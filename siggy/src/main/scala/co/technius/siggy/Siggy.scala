@@ -86,6 +86,7 @@ object Siggy {
     stats flatMap {
       case pkg: Pkg =>
         analyzeStats(prefix + pkg.name, pkg.stats)
+      case po: Pkg.Object => recurContainer(po.name.toString, ".", po.templ.stats)
       case obj: Defn.Object => recurContainer(obj.name.toString, ".", obj.templ.stats)
       case cls: Defn.Class => recurContainer(cls.name.toString, "#", cls.templ.stats)
       case trt: Defn.Trait => recurContainer(trt.name.toString, "#", trt.templ.stats)
