@@ -120,7 +120,7 @@ object Siggy {
       val sigMatch =
         defParams.length == query.params.length &&
         defParams.zip(query.params).forall { case (p1, p2) => p1 == p2.name }
-      // match type signature with enclosing class/object/trait appended
+      // match type signature with enclosing class/object/trait prepended
       // e.g. Foo => Int matches Foo.foo: Int
       lazy val sigWithEncMatch =
         s.enclosingName.toList ++ defParams == query.params.map(_.name)
