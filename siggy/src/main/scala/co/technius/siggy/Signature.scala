@@ -10,9 +10,9 @@ package co.technius.siggy
 case class Signature(
   prefix: String,
   name: String,
-  tparams: List[String],
-  paramLists: List[List[(String, String)]],
-  tpe: String,
+  tparams: List[TypeInfo],
+  paramLists: List[List[(String, TypeInfo)]],
+  tpe: TypeInfo,
   property: Boolean = false) {
 
   def enclosingName: Option[String] = {

@@ -64,4 +64,20 @@ class AnalyzerTest extends FlatSpec with Matchers {
     val Right(sigs) = result
     sigs.length should === (2)
   }
+
+  it should "find generic methods" in {
+    val result = Siggy.analyze("""object Foo {
+      def id[A](a: A): A = a
+      def const[A, B](a: A)(ignored: B): A = a
+      def bar[F[_], A, B](a: F[A]): F[A] = a
+    }
+    """)
+    result shouldBe a [Right[_, _]]
+    val Right(List(idSig, constSig, foo)) = result
+    idSig.tparams.length should === (1)
+    idSig.tparams(0) should === (TypeInfo("A", Seq.empty))
+    constSig.tparams.length should === (2)
+    constSig.tparams(0) should === (TypeInfo("A", Seq.empty))
+    constSig.tparams(1) should === (TypeInfo("B", Seq.empty))
+  }
 }

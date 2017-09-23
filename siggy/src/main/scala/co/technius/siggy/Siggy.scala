@@ -104,26 +104,32 @@ object Siggy {
   def findSignatures(prefix: String)(stats: List[Stat]): List[Signature] = {
     stats collect {
       case Defn.Def(mods, name, tparams, paramLists, Some(tpe), _) =>
-        val pls = paramLists.map(pl => pl.map(p => (p.name.toString, p.decltpe.get.toString)))
-        Signature(prefix, name.toString, tparams.map(_.toString), pls, tpe.toString)
+        val pls = paramLists.map(pl => pl.map(p => (p.name.toString, typeToInfo(p.decltpe.get))))
+        def tparamToInfo(p: Type.Param): TypeInfo =
+          TypeInfo(p.name.toString, p.tparams.map(tparamToInfo(_)))
+        Signature(prefix, name.toString, tparams.map(tparamToInfo(_)), pls, typeToInfo(tpe))
     }
   }
 
   def querySignatures(sigs: List[Signature], query: Query): List[Signature] =
     sigs filter { s =>
-      val defParams = s.paramLists.flatten.map(_._2) :+ s.tpe
+      val defParams: Seq[TypeInfo] = s.paramLists.flatten.map(_._2) :+ s.tpe
 
       // match type paramemter length
       // this is because e.g. `[A,B] A => B` and `[C,D] C => D` are equivalent
       val tparamsLenMatch = s.tparams.length == query.tparams.length
       // match type signature
-      val sigMatch =
-        defParams.length == query.params.length &&
-        defParams.zip(query.params).forall { case (p1, p2) => p1 == p2.name }
+      val sigMatch = defParams == query.params
       // match type signature with enclosing class/object/trait prepended
       // e.g. Foo => Int matches Foo.foo: Int
       lazy val sigWithEncMatch =
-        s.enclosingName.toList ++ defParams == query.params.map(_.name)
+        s.enclosingName.map(TypeInfo(_, Seq.empty)).toList ++ defParams == query.params
       tparamsLenMatch && (sigMatch || sigWithEncMatch)
     }
+
+  def typeToInfo(tpe: Type): TypeInfo = tpe match {
+    case t: Type.Name => TypeInfo(t.toString, Seq.empty)
+    case t: Type.Apply => TypeInfo(t.tpe.toString, t.args.map(typeToInfo(_)))
+    case _ => sys.error("Not implemented")
+  }
 }
