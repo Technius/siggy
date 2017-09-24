@@ -30,4 +30,11 @@ class QueryTest extends FlatSpec with Matchers {
     // Monoid[F[_]] should have F[_]
     query.params.head.tparams.length should === (1)
   }
+
+  it should "support function types" in {
+    val result = Query.parse("[A, B, C] (A => B) => (B => C) => (A => C)")
+    val Right(query) = result
+    query.tparams.length should === (3)
+    query.params.length should === (3)
+  }
 }

@@ -19,7 +19,11 @@ object Query {
       case (n, tp) => TypeInfo(n, tp.getOrElse(List.empty))
     }
     val params: P[Seq[TypeInfo]] = P(tpe.rep(min = 1, sep = "=>"))
-    val query: P[Query] = P(tparams.? ~/ params) map {
+    val paramsAsFunction: P[TypeInfo] = params map { tis =>
+      tis.reduceRight((lhs, rhs) => TypeInfo("=>", Seq(lhs, rhs)))
+    }
+    val paramsInParens: P[Seq[TypeInfo]] = P(("(" ~ paramsAsFunction ~ ")").rep(min = 1, sep = "=>"))
+    val query: P[Query] = P(tparams.? ~/ (paramsInParens | params)) map {
       case (tpsOpt, ps) => Query(tpsOpt.map(_.toList).getOrElse(List.empty), ps.toList)
     }
   }
