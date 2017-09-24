@@ -113,8 +113,16 @@ object Siggy {
 
   def querySignatures(sigs: List[Signature], query: Query): List[Signature] =
     sigs filter { s =>
-      val defParams: Seq[TypeInfo] = s.paramLists.flatten.map(_._2) :+ s.tpe
-      val queryParams = query.params
+
+      /** Flattens function types */
+      def flattenFuncs(tps: Seq[TypeInfo]): Seq[TypeInfo] =
+        tps.foldLeft(Seq.empty[TypeInfo]) {
+          case (ts, next) if next.name == "=>" => ts ++ flattenFuncs(next.tparams)
+          case (ts, next) => ts :+ next
+        }
+
+      val defParams: Seq[TypeInfo] = flattenFuncs(s.paramLists.flatten.map(_._2) :+ s.tpe)
+      val queryParams = flattenFuncs(query.params)
 
       // match type paramemter length
       // this is because e.g. `[A,B] A => B` and `[C,D] C => D` are equivalent

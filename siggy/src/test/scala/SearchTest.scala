@@ -49,4 +49,13 @@ class SearchTest extends FlatSpec with Matchers {
     val Right(query) = Query.parse("[F[_], A] F[F[A]] => F[A]")
     Siggy.querySignatures(sigs, query) should not be empty
   }
+
+  it should "flatten function types" in {
+    val Right(sigs) = Siggy.analyze("""object Foo {
+      def foldLeft[A, B](f: (B, A) => B)(z: B)(xs: List[A]): B = ???
+    }
+    """)
+    val Right(query) = Query.parse("[A, B] B => A => B => B => List[A] => B")
+    Siggy.querySignatures(sigs, query) should not be empty
+  }
 }
