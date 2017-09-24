@@ -32,9 +32,14 @@ class QueryTest extends FlatSpec with Matchers {
   }
 
   it should "support function types" in {
-    val result = Query.parse("[A, B, C] (A => B) => (B => C) => (A => C)")
-    val Right(query) = result
-    query.tparams.length should === (3)
-    query.params.length should === (3)
+    val Right(query1) = Query.parse("[A, B, C] (A => B) => (B => C) => (A => C)")
+    query1.tparams.length should === (3)
+    query1.params.length should === (3)
+    val Right(query2) = Query.parse("[A, B] Option[A] => Option[A => B] => Option[B]")
+    query2.tparams.length should === (2)
+    query2.params.length should === (3)
+    val Right(query3) = Query.parse("[A, B] Option[A] => (A => B) => Option[B]")
+    query3.tparams.length should === (2)
+    query3.params.length should === (3)
   }
 }

@@ -114,16 +114,17 @@ object Siggy {
   def querySignatures(sigs: List[Signature], query: Query): List[Signature] =
     sigs filter { s =>
       val defParams: Seq[TypeInfo] = s.paramLists.flatten.map(_._2) :+ s.tpe
+      val queryParams = query.params
 
       // match type paramemter length
       // this is because e.g. `[A,B] A => B` and `[C,D] C => D` are equivalent
       val tparamsLenMatch = s.tparams.length == query.tparams.length
       // match type signature
-      val sigMatch = defParams == query.params
+      val sigMatch = defParams == queryParams
       // match type signature with enclosing class/object/trait prepended
       // e.g. Foo => Int matches Foo.foo: Int
       lazy val sigWithEncMatch =
-        s.enclosingName.map(TypeInfo(_, Seq.empty)).toList ++ defParams == query.params
+        s.enclosingName.map(TypeInfo(_, Seq.empty)).toList ++ defParams == queryParams
       tparamsLenMatch && (sigMatch || sigWithEncMatch)
     }
 
