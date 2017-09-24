@@ -130,6 +130,6 @@ object Siggy {
   def typeToInfo(tpe: Type): TypeInfo = tpe match {
     case t: Type.Name => TypeInfo(t.toString, Seq.empty)
     case t: Type.Apply => TypeInfo(t.tpe.toString, t.args.map(typeToInfo(_)))
-    case _ => sys.error("Not implemented")
+    case _ => sys.error("typeToInfo not implemented for " + tpe.getClass.getName)
   }
 }
