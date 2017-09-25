@@ -118,6 +118,7 @@ object Siggy {
       def flattenFuncs(tps: Seq[TypeInfo]): Seq[TypeInfo] =
         tps.foldLeft(Seq.empty[TypeInfo]) {
           case (ts, next) if next.name == "=>" => ts ++ flattenFuncs(next.tparams)
+          case (ts, next) if next.name == "TupleN" => ts ++ next.tparams
           case (ts, next) => ts :+ next
         }
 
@@ -140,6 +141,7 @@ object Siggy {
     case t: Type.Name => TypeInfo(t.toString, Seq.empty)
     case t: Type.Apply => TypeInfo(t.tpe.toString, t.args.map(typeToInfo(_)))
     case t: Type.Function => TypeInfo("=>", t.params.map(typeToInfo(_)) :+ typeToInfo(t.res))
+    case t: Type.Tuple => TypeInfo("TupleN", t.args.map(typeToInfo(_)))
     case _ => sys.error("typeToInfo not implemented for " + tpe.getClass.getName)
   }
 }

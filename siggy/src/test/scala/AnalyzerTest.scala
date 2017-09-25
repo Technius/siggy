@@ -9,7 +9,6 @@ class AnalyzerTest extends FlatSpec with Matchers {
       def bar: Int = 1
     }
     """)
-    result shouldBe a [Right[_, _]]
     val Right(sigs) = result
     sigs.length should === (2)
   }
@@ -45,7 +44,6 @@ class AnalyzerTest extends FlatSpec with Matchers {
       }
     }
     """)
-    result shouldBe a [Right[_, _]]
     val Right(sigs) = result
     sigs.length should === (3)
     val List(bz, dlr, amet) = sigs
@@ -60,7 +58,6 @@ class AnalyzerTest extends FlatSpec with Matchers {
       def baz(a: String): String = a
     }
     """)
-    result shouldBe a [Right[_, _]]
     val Right(sigs) = result
     sigs.length should === (2)
   }
@@ -72,12 +69,24 @@ class AnalyzerTest extends FlatSpec with Matchers {
       def bar[F[_], A, B](a: F[A]): F[A] = a
     }
     """)
-    result shouldBe a [Right[_, _]]
     val Right(List(idSig, constSig, foo)) = result
     idSig.tparams.length should === (1)
     idSig.tparams(0) should === (TypeInfo("A", Seq.empty))
     constSig.tparams.length should === (2)
     constSig.tparams(0) should === (TypeInfo("A", Seq.empty))
     constSig.tparams(1) should === (TypeInfo("B", Seq.empty))
+  }
+
+  it should "find methods involving tuples" in {
+    val result = Siggy.analyze("""object Foo {
+      def curry[A,B,C](f: (A, B) => C): A => B => C = ???
+      def uncurry[A,B,C](f: A => B => C): (A, B) => C = ???
+    }
+    """)
+    val Right(List(currySig, uncurrySig)) = result
+    currySig.tparams.length should === (3)
+    currySig.paramLists(0).length should === (1)
+    uncurrySig.tparams.length should === (3)
+    uncurrySig.paramLists(0).length should === (1)
   }
 }

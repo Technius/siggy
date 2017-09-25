@@ -42,4 +42,21 @@ class QueryTest extends FlatSpec with Matchers {
     query3.tparams.length should === (2)
     query3.params.length should === (3)
   }
+
+  it should "support tuples" in {
+    val Right(query1) = Query.parse("[A,B] (A, B) => A")
+    query1.tparams.length should === (2)
+    query1.params.length should === (2)
+    query1.params(0).name should === ("TupleN")
+    query1.params(0).tparams.length should === (2)
+
+    val Right(query2) = Query.parse("[A,B,C] ((A, B) => C) => A => B => C")
+    query2.tparams.length should === (3)
+    query2.params.length should === (4)
+
+    val Right(query3) = Query.parse("[A,B,C,D] ((A => C), (B => D)) => (A, B) => (C, D)")
+    query3.tparams.length should === (4)
+    query3.params.length should === (3)
+    query3.params.head.tparams.length should === (2)
+  }
 }
