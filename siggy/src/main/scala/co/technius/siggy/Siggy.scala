@@ -17,7 +17,7 @@ object Siggy {
               case Right(sigs) =>
                 if (!sigs.isEmpty) {
                   println(path.toString + ":")
-                  sigs.foreach(println _)
+                  sigs.foreach(s => println("\t" + s.toString))
                 }
             }
           }
@@ -34,7 +34,7 @@ object Siggy {
                     val matches = querySignatures(sigs, query)
                     if (!matches.isEmpty) {
                       println(path.toString + ":")
-                      matches.foreach(println _)
+                      matches.foreach(s => println("\t" + s.toString))
                     }
                 }
               }
@@ -142,6 +142,7 @@ object Siggy {
     case t: Type.Apply => TypeInfo(t.tpe.toString, t.args.map(typeToInfo(_)))
     case t: Type.Function => TypeInfo("=>", t.params.map(typeToInfo(_)) :+ typeToInfo(t.res))
     case t: Type.Tuple => TypeInfo("TupleN", t.args.map(typeToInfo(_)))
-    case _ => sys.error("typeToInfo not implemented for " + tpe.getClass.getName)
+    case t: Type.Select => TypeInfo(t.toString, Seq.empty)
+    case _ => TypeInfo(tpe.toString, Seq.empty)
   }
 }

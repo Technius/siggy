@@ -12,8 +12,7 @@ case class Signature(
   name: String,
   tparams: List[TypeInfo],
   paramLists: List[List[(String, TypeInfo)]],
-  tpe: TypeInfo,
-  property: Boolean = false) {
+  tpe: TypeInfo) {
 
   def enclosingName: Option[String] = {
     val i = prefix.lastIndexOf(".")
@@ -28,7 +27,7 @@ case class Signature(
   override def toString: String = {
     val tparamStr = if (tparams.isEmpty) "" else tparams.mkString("[", ",", "]")
     val paramStr =
-      if (paramLists.isEmpty && property) ""
+      if (paramLists.isEmpty) ""
       else paramLists.map(pl =>
         pl.map(p => p._1 + ": " + p._2).mkString("(", ", ", ")")).mkString
     s"$prefix$name$tparamStr$paramStr: $tpe"
