@@ -6,13 +6,15 @@ package co.technius.siggy
   * @param tparams Type parameters
   * @param params A list of parameter names and types
   * @param tpe  The return type
+  * @param lineNum The line number at which the signature begins.
   */
 case class Signature(
   prefix: String,
   name: String,
   tparams: List[TypeInfo],
   paramLists: List[List[(String, TypeInfo)]],
-  tpe: TypeInfo) {
+  tpe: TypeInfo,
+  lineNum: Int) {
 
   def enclosingName: Option[String] = {
     val i = prefix.lastIndexOf(".")
@@ -30,6 +32,6 @@ case class Signature(
       if (paramLists.isEmpty) ""
       else paramLists.map(pl =>
         pl.map(p => p._1 + ": " + p._2).mkString("(", ", ", ")")).mkString
-    s"$prefix$name$tparamStr$paramStr: $tpe"
+    s"line $lineNum: $prefix$name$tparamStr$paramStr: $tpe"
   }
 }

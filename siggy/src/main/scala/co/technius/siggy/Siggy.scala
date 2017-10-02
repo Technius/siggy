@@ -17,7 +17,7 @@ object Siggy {
               case Right(sigs) =>
                 if (!sigs.isEmpty) {
                   println(path.toString + ":")
-                  sigs.foreach(s => println("\t" + s.toString))
+                  sigs.foreach(s => println("\t " + s.toString))
                 }
             }
           }
@@ -103,11 +103,18 @@ object Siggy {
     */
   def findSignatures(prefix: String)(stats: List[Stat]): List[Signature] = {
     stats collect {
-      case Defn.Def(mods, name, tparams, paramLists, Some(tpe), _) =>
+      case tree@Defn.Def(mods, name, tparams, paramLists, Some(tpe), _) =>
         val pls = paramLists.map(pl => pl.map(p => (p.name.toString, typeToInfo(p.decltpe.get))))
         def tparamToInfo(p: Type.Param): TypeInfo =
           TypeInfo(p.name.toString, p.tparams.map(tparamToInfo(_)))
-        Signature(prefix, name.toString, tparams.map(tparamToInfo(_)), pls, typeToInfo(tpe))
+
+        Signature(
+          prefix,
+          name.toString,
+          tparams.map(tparamToInfo(_)),
+          pls,
+          typeToInfo(tpe),
+          tree.pos.startLine)
     }
   }
 
