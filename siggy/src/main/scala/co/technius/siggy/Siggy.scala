@@ -12,7 +12,7 @@ object Siggy {
       case path :: Nil =>
         scanPath(path) foreach { path =>
           withSource(path) { s =>
-            analyze(s.mkString) match {
+            findDefs(s.mkString) match {
               case Left(err) => println("Error: " + err)
               case Right(sigs) =>
                 if (!sigs.isEmpty) {
@@ -28,7 +28,7 @@ object Siggy {
           case Right(query) =>
             scanPath(path) foreach { path =>
               withSource(path) { s =>
-                analyze(s.mkString) match {
+                findDefs(s.mkString) match {
                   case Left(err) => println("Error: " + err)
                   case Right(sigs) =>
                     val matches = querySignatures(sigs, query)
@@ -64,10 +64,10 @@ object Siggy {
   /**
     * Attempts to find the method definitions in the given source code.
     */
-  def analyze(src: String): Either[String, List[Signature]] = {
+  def findDefs(src: String): Either[String, List[Signature]] = {
     src.parse[Source] match {
       case Parsed.Success(tree) =>
-        val defs = analyzeStats("", tree.stats)
+        val defs = findInStats("", tree.stats)
         Right(defs)
       case Parsed.Error(_, _, details) =>
         Left(details.getMessage)
@@ -79,13 +79,13 @@ object Siggy {
     * @param pkgName The name of the enclosing package, or empty string if there is none.
     * @param stats The list of statements to search.
     */
-  def analyzeStats(pkgName: String, stats: List[Stat]): List[Signature] = {
+  def findInStats(pkgName: String, stats: List[Stat]): List[Signature] = {
     val prefix = if (pkgName.isEmpty) "" else pkgName + "."
     def recurContainer(name: String, sep: String, st: List[Stat]): List[Signature] =
-      findSignatures(prefix + name + sep)(st) ++ analyzeStats(prefix + name, st)
+      findSignatures(prefix + name + sep)(st) ++ findInStats(prefix + name, st)
     stats flatMap {
       case pkg: Pkg =>
-        analyzeStats(prefix + pkg.name, pkg.stats)
+        findInStats(prefix + pkg.name, pkg.stats)
       case po: Pkg.Object => recurContainer(po.name.toString, ".", po.templ.stats)
       case obj: Defn.Object => recurContainer(obj.name.toString, ".", obj.templ.stats)
       case cls: Defn.Class => recurContainer(cls.name.toString, "#", cls.templ.stats)

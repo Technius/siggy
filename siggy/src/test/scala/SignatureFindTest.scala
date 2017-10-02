@@ -2,9 +2,9 @@ import org.scalatest._
 
 import co.technius.siggy._
 
-class AnalyzerTest extends FlatSpec with Matchers {
-  "Siggy analyzer" should "find defs in top-level objects" in {
-    val result = Siggy.analyze("""object Foo {
+class SignatureFindTest extends FlatSpec with Matchers {
+  "Siggy" should "find defs in top-level objects" in {
+    val result = Siggy.findDefs("""object Foo {
       def foo(a: Int): String = a.toString
       def bar: Int = 1
     }
@@ -14,7 +14,7 @@ class AnalyzerTest extends FlatSpec with Matchers {
   }
 
   it should "find property defs" in {
-    val result = Siggy.analyze("""object Foo1 {
+    val result = Siggy.findDefs("""object Foo1 {
       def bar: Int = 1
     }
     trait Foo2 {
@@ -30,7 +30,7 @@ class AnalyzerTest extends FlatSpec with Matchers {
   }
 
   it should "find defs in nested objects and classes" in {
-    val result = Siggy.analyze("""class Foo {
+    val result = Siggy.findDefs("""class Foo {
       class Bar {
         def baz(a: Int): Int = a
       }
@@ -53,7 +53,7 @@ class AnalyzerTest extends FlatSpec with Matchers {
   }
 
   it should "find defs in package objects" in {
-    val result = Siggy.analyze("""package object foo {
+    val result = Siggy.findDefs("""package object foo {
       def bar(a: Int): Int = a
       def baz(a: String): String = a
     }
@@ -63,7 +63,7 @@ class AnalyzerTest extends FlatSpec with Matchers {
   }
 
   it should "find generic methods" in {
-    val result = Siggy.analyze("""object Foo {
+    val result = Siggy.findDefs("""object Foo {
       def id[A](a: A): A = a
       def const[A, B](a: A)(ignored: B): A = a
       def bar[F[_], A, B](a: F[A]): F[A] = a
@@ -78,7 +78,7 @@ class AnalyzerTest extends FlatSpec with Matchers {
   }
 
   it should "find methods involving tuples" in {
-    val result = Siggy.analyze("""object Foo {
+    val result = Siggy.findDefs("""object Foo {
       def curry[A,B,C](f: (A, B) => C): A => B => C = ???
       def uncurry[A,B,C](f: A => B => C): (A, B) => C = ???
     }

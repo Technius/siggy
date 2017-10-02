@@ -4,7 +4,7 @@ import co.technius.siggy._
 
 class SearchTest extends FlatSpec with Matchers {
   "Siggy search" should "find class members" in {
-    val Right(sigs) = Siggy.analyze("""class Foo {
+    val Right(sigs) = Siggy.findDefs("""class Foo {
       def bar: Int = 1
     }
     """)
@@ -13,7 +13,7 @@ class SearchTest extends FlatSpec with Matchers {
   }
 
   it should "find methods in nested objects" in {
-    val Right(sigs) = Siggy.analyze("""object Foo {
+    val Right(sigs) = Siggy.findDefs("""object Foo {
       object Bar {
         def baz(a: Int): String = a.toString
       }
@@ -24,7 +24,7 @@ class SearchTest extends FlatSpec with Matchers {
   }
 
   it should "find generic methods" in {
-    val Right(sigs) = Siggy.analyze("""object Foo {
+    val Right(sigs) = Siggy.findDefs("""object Foo {
       def optionMap[A, B](oa: Option[A])(f: A => B): Option[B] = os.map(f)
     }
     """)
@@ -33,7 +33,7 @@ class SearchTest extends FlatSpec with Matchers {
   }
 
   it should "find function types" in {
-    val Right(sigs) = Siggy.analyze("""object Foo {
+    val Right(sigs) = Siggy.findDefs("""object Foo {
       def compose[A, B, C](g: B => C)(f: A => B): A => C = ???
     }
     """)
@@ -42,7 +42,7 @@ class SearchTest extends FlatSpec with Matchers {
   }
 
   it should "find higher-kinded types" in {
-    val Right(sigs) = Siggy.analyze("""object Foo {
+    val Right(sigs) = Siggy.findDefs("""object Foo {
       def flatten[F[_], A](ffa: F[F[A]]): F[A] = ???
     }
     """)
@@ -51,7 +51,7 @@ class SearchTest extends FlatSpec with Matchers {
   }
 
   it should "find tuple types" in {
-    val Right(sigs) = Siggy.analyze("""object Foo {
+    val Right(sigs) = Siggy.findDefs("""object Foo {
       def fst[A,B](t: (A, B)): A = ???
     }
     """)
@@ -60,7 +60,7 @@ class SearchTest extends FlatSpec with Matchers {
   }
 
   it should "flatten function and tuple types" in {
-    val Right(sigs) = Siggy.analyze("""object Foo {
+    val Right(sigs) = Siggy.findDefs("""object Foo {
       def foldLeft[A, B](f: (B, A) => B)(z: B)(xs: List[A]): B = ???
     }
     """)
