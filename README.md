@@ -3,6 +3,20 @@
 Siggy is a naive, source file-based function search tool for Scala. It uses
 [Scalameta](http://scalameta.org) to find type signatures in source files.
 
+Goals:
+
+* Provide a quick-and-dirty way to search for method definitions
+* Have a fast startup time
+* Show how easily Scalameta can be used to create dev tools
+* Use types as queries
+
+Non-goals:
+
+* Support every type signature under the sun
+* Support type aliasing with generics
+* Support macro-generated classes and objects
+* Be used for autocompletion
+
 ## Usage
 
 `siggy <path> [query]`
