@@ -36,7 +36,7 @@ object Foo {
 
 ```plain
 /tmp/foo.scala:
-Foo.intToString(i: Int): String
+line 3: Foo.intToString(i: Int): String
 ```
 
 ## License
